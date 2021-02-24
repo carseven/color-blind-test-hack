@@ -1,10 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from keras import layers
-from keras import models
-from keras.datasets import mnist
-from keras.utils import to_categorical
-from keras.preprocessing.image import ImageDataGenerator
+import tensorflow as tf
+from tensorflow.python.keras import models, layers
+from tensorflow.python.keras.datasets import mnist
+from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
+import random
+import json
+
 
 (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
 
@@ -23,8 +24,8 @@ test_images = test_images.reshape((10000, 28, 28, 1))
 test_images = test_images.astype('float32') / 255
 
 #  Se codifican las etiquetas como one-hot enconding
-train_labels = to_categorical(train_labels)
-test_labels = to_categorical(test_labels)
+train_labels = tf.keras.utils.to_categorical(train_labels)
+test_labels = tf.keras.utils.to_categorical(test_labels)
 
 """### Aumentación de datos"""
 
@@ -49,16 +50,6 @@ datagen = ImageDataGenerator(zoom_range=0.1,
 #  Solo utilizamos aumentación en el conjunto de entrenamiento. Se indica al
 #  al generador que imagenes tiene que procesar
 datagen.fit(train_images)
-
-# Se grafican las primeras 9 muestras generadas por ImageDataGenerator
-for x_batch, y_batch in datagen.flow(train_images, train_labels, batch_size=9):
-    for i in range(0, 9):
-        plt.subplot(330 + 1 + i)
-        plt.imshow(x_batch[i].reshape(28, 28), cmap=plt.get_cmap('gray'))
-    plt.show()
-    break
-
-"""### Definir modelo entrenamiento"""
 
 
 #  Se indica que es un modelo secuencial
@@ -107,73 +98,24 @@ model.compile(optimizer='adam',
 #  Visualización de los bloques y parametros del modelo implementado.
 model.summary()
 
-"""### Fase de entrenamiento"""
-
 #  Se indica que datos alimentan al modelo en la fase de entrenamiento y en la
 # de validación. En este caso los datos de entrenamiento viene generador tras
 # procesar el conjunto de entrenamiento.
 history = model.fit(datagen.flow(train_images, train_labels,
                                  batch_size=256),
                     steps_per_epoch=int(train_images.shape[0] / 256) + 1,
-                    epochs=40,
+                    epochs=20,
                     validation_data=(test_images, test_labels))
-
-"""### Fase de test"""
 
 test_loss, test_acc = model.evaluate(test_images, test_labels)
 print('Test accuracy:', test_acc)
 
-"""### Gráficos de la función de perdidas y de aciertos"""
+pwd = '/Users/carseven/dev/color-blind-test-hack/'
 
-#  Se obtiene los datos la función de perdidas calculados por el modelos. Tanto
-#  la de entrenamiento como la de validación.
-loss = history.history['loss']
+model.save_weights(pwd + 'src/model-data/mnist.tf', save_format='tf')
 
-#  Se obtiene los datos la función de perdidas calculados por el modelos. Tanto
-#  la de entrenamiento como la de validación.
-val_loss = history.history['val_loss']
-
-#  Generación del vector de épocas
-epochs = range(1, len(loss) + 1)
-
-#  Generamos el grafico de la función de perdidas en entrenamiento y validación
-plt.plot(epochs, loss, 'g', label='Conjunto entrenamiento')
-plt.plot(epochs, val_loss, 'b', label='Conjunto validación')
-
-#  Se configura la apariencia del gráficos
-plt.title('Curva de perdidas', fontsize=18)
-plt.xlabel('Epochs', fontsize=14)
-plt.ylabel('Loss', fontsize=14)
-plt.grid(alpha=0.3)
-plt.legend(loc='best', shadow=True)
-
-#  Guardar en formato .png y mostrar el gráfico.
-plt.savefig('loss.png')
-plt.show()
-
-#  Limpiar representación anterior.
-plt.clf()
-
-
-#  Se obtiene los datos la función de aciertos calculados por el modelos. Tanto
-#  la de entrenamiento como la de validación.
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
-
-#  Generamos el grafico de la función de perdidas en
-#  entrenamiento y validación.
-plt.plot(epochs, acc, 'g', label='Conjunto entrenamiento')
-plt.plot(epochs, val_acc, 'b', label='Conjunto validación')
-plt.title('Curva de aciertos', fontsize=18)
-plt.xlabel('Epochs', fontsize=14)
-plt.ylabel('Loss', fontsize=14)
-plt.grid(alpha=0.3)
-plt.legend(loc='best', shadow=True)
-
-#  Guardar en formato .png y mostrar el gráfico.
-plt.savefig('val.png')
-plt.show()
-
-"""### Guardar modelo"""
-
-model.save('mnist.h5')
+model_config = model.to_json()
+with open(pwd + 'src/model-data/model-config.json',
+          'w',
+          encoding='utf-8') as f:
+    json.dump(model_config, f, ensure_ascii=False, indent=4)
