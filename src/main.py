@@ -3,11 +3,15 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import tensorflow.python.keras.models as models
+import json
+import os
 
 # Cargar modelo previamiente entrenado
-pwd = '/Users/carseven/dev/color-blind-test-hack/'
-new_model = models.model_from_json(pwd + 'src/model-data/model-config.js')
-new_model.load_weights(pwd + 'src/model-data/checkpoint')
+pwd = os.getcwd()  # Ojo que es la ruta de este archivo, no la del proyecto
+with open(pwd + '/model-data/model-config.json', 'r') as json_file:
+    architecture = json.load(json_file)
+    model = models.model_from_json(architecture)
+    # model.load_weights(pwd + '/model-data/checkpoint')
 
 
 def imshow(img):
@@ -27,31 +31,31 @@ def main():
         file_bytes = np.asarray(
             bytearray(uploaded_file.read()),
             dtype=np.uint8)
-        opencv_image = cv2.imdecode(file_bytes, 1)
+        # opencv_image = cv2.imdecode(file_bytes, 1)
 
         # Mostrar imagen subida
         st.image(
-            opencv_image,
+            uploaded_file,
             caption='Uploaded Image.',
             use_column_width=True)
 
         # Resize imagen
-        img = cv2.resize(opencv_image, (128, 128), 0, 0, cv2.INTER_AREA)
+        # img = cv2.resize(opencv_image, (128, 128), 0, 0, cv2.INTER_AREA)
 
-        img = procesar_img(img)
-        st.pyplot(imshow(img),
-                  caption='Uploaded Image.',
-                  use_column_width=True)
+        # img = procesar_img(img)
+        # st.pyplot(imshow(img),
+        #           caption='Uploaded Image.',
+        #           use_column_width=True)
 
-        # Todo los que sea procesado pasar a la función de procesar
-        processed_images = np.array(imutils.resize(img, height=28))
-        processed_images = np.array(processed_images)
-        processed_images = processed_images.reshape(1, 28, 28, 1)
-        processed_images = tf.cast(processed_images, tf.float32)
-        preds = np.argmax(new_model.predict(processed_images), axis=1)
+        # # Todo los que sea procesado pasar a la función de procesar
+        # processed_images = np.array(imutils.resize(img, height=28))
+        # processed_images = np.array(processed_images)
+        # processed_images = processed_images.reshape(1, 28, 28, 1)
+        # processed_images = tf.cast(processed_images, tf.float32)
+        # preds = np.argmax(new_model.predict(processed_images), axis=1)
 
-        st.write("")
-        st.write(f"El número es {preds[0]}")
+        # st.write("")
+        # st.write(f"El número es {preds[0]}")
 
 
 if __name__ == '__main__':
