@@ -44,7 +44,6 @@ def overlaps_motive(image, x, y, r):
     points_y = [y, y-r, y+r, y, y, y+r*0.93, y-r*0.93, y+r*0.93, y-r*0.93]
 
     for xy in zip(points_x, points_y):
-        print(f'Pixel: {xy} {image.getpixel(xy)}')
         # if image.getpixel(xy)[:3] != BACKGROUND: -> Esto peta si las imagenes son en blanco y negro, analizar que tipo de imagen y añadir un flag.
         if image.getpixel(xy) != BACKGROUND:
             return True
